@@ -8,15 +8,15 @@ spec:
   params:
     - name: app-repo-url
       type: string
-      default: "{{ app_repo_url }}"
+      default: "https://github.com/rh-bcordeir/movies-python.git"
     - name: app-repo-revision
       type: string
     - name: gitops-repo-url
       type: string
-      default: "{{ gitops_repo_url }}"
+      default: "https://github.com/rh-bcordeir/movies-python-devops"
     - name: gitops-repo-revision
       type: string
-      default: "{{ gitops_repo_revision }}"
+      default: "develop"
     - name: image-tag
       type: string
       description: "Short SHA injected by the trigger."
@@ -89,6 +89,6 @@ spec:
         - name: IMAGE_TAG
           value: $(params.image-tag)
         - name: GIT_USER_NAME
-          value: "{{ git_user_name }}"
+          value: "Tekton Pipeline"
         - name: GIT_USER_EMAIL
-          value: "{{ git_user_email }}"
+          value: "tekton@movies.local"
