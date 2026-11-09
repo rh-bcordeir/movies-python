@@ -16,7 +16,7 @@ spec:
       default: "https://github.com/rh-bcordeir/movies-python-devops"
     - name: gitops-repo-revision
       type: string
-      default: "develop"
+      default: "main"
     - name: image-tag
       type: string
       description: "Short SHA injected by the trigger."
