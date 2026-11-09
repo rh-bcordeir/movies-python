@@ -1,0 +1,70 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: update-gitops
+  namespace: movies-ci
+spec:
+  description: >
+    Clone the GitOps repo, bump image.tag in the Helm values file,
+    commit and push back. Triggers ArgoCD to roll out the new image.
+  params:
+    - name: GITOPS_REPO_URL
+      type: string
+    - name: GITOPS_REPO_REVISION
+      type: string
+      default: main
+    - name: VALUES_FILE
+      type: string
+      description: "Path within the gitops repo to the values.yaml file."
+      default: chart/values.yaml
+    - name: IMAGE_REPOSITORY
+      type: string
+    - name: IMAGE_TAG
+      type: string
+    - name: GIT_USER_NAME
+      type: string
+      default: "Tekton Pipeline"
+    - name: GIT_USER_EMAIL
+      type: string
+      default: "tekton@example.com"
+  workspaces:
+    - name: source
+  steps:
+    - name: update-and-push
+      image: registry.access.redhat.com/ubi9/ubi:latest
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        dnf install -y --quiet git python3-pyyaml >/dev/null
+
+        git config --global user.name  "$(params.GIT_USER_NAME)"
+        git config --global user.email "$(params.GIT_USER_EMAIL)"
+
+        rm -rf gitops
+        git clone --depth=1 --branch "$(params.GITOPS_REPO_REVISION)" \
+          "$(params.GITOPS_REPO_URL)" gitops
+        cd gitops
+
+        python3 - <<PY
+        import sys, yaml
+        path = "$(params.VALUES_FILE)"
+        with open(path) as f:
+            data = yaml.safe_load(f) or {}
+        data.setdefault("image", {})
+        data["image"]["repository"] = "$(params.IMAGE_REPOSITORY)"
+        data["image"]["tag"]        = "$(params.IMAGE_TAG)"
+        with open(path, "w") as f:
+            yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
+        PY
+
+        git add "$(params.VALUES_FILE)"
+        if git diff --cached --quiet; then
+          echo "No changes to commit."
+          exit 0
+        fi
+
+        git commit -m "ci: bump image to $(params.IMAGE_REPOSITORY):$(params.IMAGE_TAG)"
+        git push origin "$(params.GITOPS_REPO_REVISION)"

@@ -1,0 +1,66 @@
+# ── TriggerTemplate: Promote dev → hml (release branch) ─────────────────────
+
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: movies-python-promote-hml-template
+  namespace: movies-ci
+spec:
+  params:
+    - name: git-revision
+    - name: git-repo-url
+    - name: short-sha
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: movies-python-promote-hml-
+        namespace: movies-ci
+      spec:
+        pipelineRef:
+          name: movies-python-promote
+        taskRunTemplate:
+          serviceAccountName: pipeline
+        params:
+          - name: source-values-file
+            value: "{{ values_file_dev }}"
+          - name: target-values-file
+            value: "{{ values_file_hml }}"
+        workspaces:
+          - name: shared-workspace
+            persistentVolumeClaim:
+              claimName: pipeline-workspace
+
+---
+# ── TriggerTemplate: Promote hml → prd (main branch) ────────────────────────
+
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: movies-python-promote-prd-template
+  namespace: movies-ci
+spec:
+  params:
+    - name: git-revision
+    - name: git-repo-url
+    - name: short-sha
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: movies-python-promote-prd-
+        namespace: movies-ci
+      spec:
+        pipelineRef:
+          name: movies-python-promote
+        taskRunTemplate:
+          serviceAccountName: pipeline
+        params:
+          - name: source-values-file
+            value: "{{ values_file_hml }}"
+          - name: target-values-file
+            value: "{{ values_file_prd }}"
+        workspaces:
+          - name: shared-workspace
+            persistentVolumeClaim:
+              claimName: pipeline-workspace
