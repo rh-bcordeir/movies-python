@@ -92,3 +92,4 @@ spec:
           value: "Tekton Pipeline"
         - name: GIT_USER_EMAIL
           value: "tekton@movies.local"
+          
