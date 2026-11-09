@@ -1,17 +1,11 @@
-
 FROM registry.access.redhat.com/ubi9/python-314:latest
 
+WORKDIR /opt/app-root/src
 
-WORKDIR /code
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
+COPY main.py .
 
-COPY ./requirements.txt /code/requirements.txt
-
-
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
-
-
-COPY ./app /code/app
-
-
-CMD ["fastapi", "run", "app/main.py", "--port", "80"]
+EXPOSE 8080
+CMD ["fastapi", "run", "main.py", "--port", "8080"]
