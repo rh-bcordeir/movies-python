@@ -8,3 +8,6 @@ dependencies = [
     "fastapi[standard]>=0.162.2",
     "numpy>=2.5.4",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
