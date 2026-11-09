@@ -1,0 +1,60 @@
+---
+# ApplicationSet — gera uma Application do ArgoCD por ambiente a partir de um
+# único template. Para adicionar um ambiente, basta incluir um item em
+# `generators.list.elements` (e garantir que o namespace exista com o label
+# argocd.argoproj.io/managed-by: openshift-gitops).
+#
+# Alternativa: applications.yaml declara as mesmas 3 Applications à mão.
+# Use UM ou OUTRO — os nomes gerados aqui são iguais aos de lá.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: movies-python
+  namespace: openshift-gitops
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - list:
+        elements:
+          - env: dev
+            namespace: develop          
+          - env: hml
+            namespace: homolog
+          - env: prd
+            namespace: movies-prd
+  template:
+    metadata:
+      name: "movies-python-{{ .env }}"
+      labels:
+        app.kubernetes.io/part-of: movies-python
+        environment: "{{ .env }}"
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/rh-bcordeir/movies-python-devops.git
+        targetRevision: main
+        path: chart
+        helm:
+          # Nome do Deployment/Service/Route criados no namespace
+          releaseName: movies-python
+          valueFiles:
+            - "values/values-{{ .env }}.yaml"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=false
+          - ServerSideApply=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 3m

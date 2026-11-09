@@ -1,0 +1,120 @@
+---
+# Alternativa ao applicationset.yaml: as mesmas 3 Applications declaradas
+# explicitamente. Use UM ou OUTRO — os nomes são iguais aos gerados pelo
+# ApplicationSet, então aplicar os dois faz os recursos brigarem entre si.
+
+# ── Dev ───────────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: movies-python-dev
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/part-of: movies-python
+    environment: dev
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rh-bcordeir/movies-python-devops.git
+    targetRevision: main
+    path: chart
+    helm:
+      releaseName: movies-python
+      valueFiles:
+        - values/values-dev.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: develop
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+---
+# ── Homolog ───────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: movies-python-hml
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/part-of: movies-python
+    environment: hml
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rh-bcordeir/movies-python-devops.git
+    targetRevision: main
+    path: chart
+    helm:
+      releaseName: movies-python
+      valueFiles:
+        - values/values-hml.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homolog
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+---
+# ── Produção ──────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: movies-python-prd
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/part-of: movies-python
+    environment: prd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rh-bcordeir/movies-python-devops.git
+    targetRevision: main
+    path: chart
+    helm:
+      releaseName: movies-python
+      valueFiles:
+        - values/values-prd.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: movies-prd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
